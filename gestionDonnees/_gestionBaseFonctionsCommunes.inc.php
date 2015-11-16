@@ -8,6 +8,60 @@ function obtenirIdNomEtablissements($connexion) {
     $stmt->execute();
     return $stmt;
 }
+function obtenirIdNomGroupes($connexion) {
+    $req = "SELECT id, nom FROM groupe ORDER BY id";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+function obtenirIdGroupes($connexion) {
+    $req = "SELECT id FROM Groupe ORDER BY id";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+
+function obtenirNomGroupes($connexion) {
+    $req = "SELECT nom FROM Groupe ORDER BY nom";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+
+function obtenirIdentiteResponsable($connexion) {
+    $req = "SELECT identiteResponsable FROM Groupe ORDER BY identiteResponsable";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+
+function obtenirAdressePostale($connexion) {
+    $req = "SELECT adressePostale FROM Groupe ORDER BY adressePostale";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+function obtenirNombrePersonnes($connexion) {
+    $req = "SELECT nombrePersonnes FROM Groupe ORDER BY nombrePersonnes";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+
+
+function obtenirNomPays($connexion) {
+    $req = "SELECT nomPays FROM Groupe ORDER BY nomPays";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
+
+function hebergement($connexion) {
+    $req = "SELECT hebergement FROM Groupe ORDER BY hebergement";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute();
+    return $stmt;
+}
 
 function obtenirIdNomEtablissementsOffrantChambres($connexion) {
     $req = "SELECT DISTINCT id, nom FROM Etablissement e 
@@ -42,7 +96,19 @@ function obtenirDetailEtablissement($connexion, $id) {
     $stmt->execute(array($id));
     return $stmt->fetch(PDO::FETCH_ASSOC);
 }
+function obtenirDetailGroupe($connexion, $id) {
+    $req = "SELECT * FROM Groupe WHERE id=?";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute(array($id));
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
 
+function supprimerGroupe($connexion, $id) {
+    $req = "DELETE FROM Groupe WHERE id=?";
+    $stmt = $connexion->prepare($req);
+    $ok = $stmt->execute(array($id));
+    return $ok;
+}
 function supprimerEtablissement($connexion, $id) {
     $req = "DELETE FROM Etablissement WHERE id=?";
     $stmt = $connexion->prepare($req);
@@ -52,12 +118,12 @@ function supprimerEtablissement($connexion, $id) {
 
 function creerModifierEtablissement($connexion, $mode, $id, $nom, $adresseRue, $codePostal, $ville, $tel, $adresseElectronique, $type, $civiliteResponsable, $nomResponsable, $prenomResponsable) {
     /* INUTILE Avec requêtes préparées
-    $nom = addslashes($nom);
-    $adresseRue = str_replace("'", "''", $adresseRue);
-    $ville = str_replace("'", "''", $ville);
-    $adresseElectronique = str_replace("'", "''", $adresseElectronique);
-    $nomResponsable = str_replace("'", "''", $nomResponsable);
-    $prenomResponsable = str_replace("'", "''", $prenomResponsable);
+      $nom = addslashes($nom);
+      $adresseRue = str_replace("'", "''", $adresseRue);
+      $ville = str_replace("'", "''", $ville);
+      $adresseElectronique = str_replace("'", "''", $adresseElectronique);
+      $nomResponsable = str_replace("'", "''", $nomResponsable);
+      $prenomResponsable = str_replace("'", "''", $prenomResponsable);
      * 
      */
     if ($mode == 'C') {
@@ -84,7 +150,34 @@ function creerModifierEtablissement($connexion, $mode, $id, $nom, $adresseRue, $
     $ok = $stmt->execute();
     return $ok;
 }
+function creerModifierGroupe($connexion, $mode, $id, $nom, $identiteResponsable,$adressePostale, $nombrePersonnes,$nomPays ,$hebergement) {
+    
+    if ($mode == 'C') {
+        $req = "INSERT INTO Groupe VALUES (:id, :nom, :identiteResponsable,:adressePostale, :nombrePersonnes, :nomPays, :hebergement)";
+    } else {
+        $req = "UPDATE Groupe SET 
+           nom=:nom,identiteResponsable=:identiteResponsable,adressePostale=:adressePostale,nombrePersonnes=:nombrePersonnes,nomPays=:nomPays,hebergement=:hebergement 
+           WHERE id=:id";
+    }
+    $stmt = $connexion->prepare($req);
+    $stmt->bindParam(':id', $id);
+    $stmt->bindParam(':nom', $nom);
+    $stmt->bindParam(':identiteResponsable', $identiteResponsable);
+    $stmt->bindParam(':adressePostale', $adressePostale);
+    $stmt->bindParam(':nombrePersonnes', $nombrePersonnes);
+    $stmt->bindParam(':nomPays', $nomPays);
+    $stmt->bindParam(':hebergement', $hebergement);
+    $ok = $stmt->execute();
+    return $ok;
+}
 
+function estUnIdGroupe($connexion, $id) {
+//    global $connexion;
+    $req = "SELECT COUNT(*) FROM Groupe WHERE id=?";
+    $stmt = $connexion->prepare($req);
+    $stmt->execute(array($id));
+    return $stmt->fetchColumn();
+}
 function estUnIdEtablissement($connexion, $id) {
 //    global $connexion;
     $req = "SELECT COUNT(*) FROM Etablissement WHERE id=?";
@@ -105,6 +198,24 @@ function estUnNomEtablissement($connexion, $mode, $id, $nom) {
         $stmt->execute(array($nom));
     } else {
         $req = "SELECT COUNT(*) FROM Etablissement WHERE nom=? AND id<>?";
+        $stmt = $connexion->prepare($req);
+        $stmt->execute(array($nom, $id));
+    }
+    return $stmt->fetchColumn();
+}
+
+function estUnNomGroupe($connexion, $mode, $id, $nom) {
+//    global $connexion;
+    $nom = str_replace("'", "''", $nom);
+    // S'il s'agit d'une création, on vérifie juste la non existence du nom sinon
+    // on vérifie la non existence d'un autre établissement (id!='$id') portant 
+    // le même nom
+    if ($mode == 'C') {
+        $req = "SELECT COUNT(*) FROM Groupe WHERE nom=?";
+        $stmt = $connexion->prepare($req);
+        $stmt->execute(array($nom));
+    } else {
+        $req = "SELECT COUNT(*) FROM Groupe WHERE nom=? AND id<>?";
         $stmt = $connexion->prepare($req);
         $stmt->execute(array($nom, $id));
     }
@@ -300,6 +411,7 @@ function existeAttributionsEtab($connexion, $id) {
     $stmt->execute(array($id));
     return $stmt->fetchColumn();
 }
+
 
 // Teste la présence d'attributions pour le type de chambre transmis 
 function existeAttributionsTypeChambre($connexion, $id) {
